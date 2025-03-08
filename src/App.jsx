@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 
-// A: Adicionamos uma variável inicial para as histórias (initialStories) fora do componente App.
 const initialStories = [
   {
     title: "React",
@@ -20,6 +19,13 @@ const initialStories = [
   },
 ];
 
+// A: Função que simula a busca assíncrona de dados.
+// Aqui, criamos uma promessa que resolve após 2 segundos, simulando um atraso de rede.
+const getAsyncStories = () =>
+  new Promise((resolve) =>
+    setTimeout(() => resolve({ data: { stories: initialStories } }), 2000)
+  );
+
 const useStorageState = (key, initialState) => {
   const [value, setValue] = useState(localStorage.getItem(key) || initialState);
 
@@ -33,10 +39,18 @@ const useStorageState = (key, initialState) => {
 const App = () => {
   const [searchTerm, setSearchTerm] = useStorageState("search", "React");
 
-  // B: Criamos um estado para as histórias (stories) usando o hook useState.
-  const [stories, setStories] = useState(initialStories);
+  // B: Estado inicial agora é um array vazio.
+  // Queremos começar com uma lista vazia e simular a busca de histórias de forma assíncrona.
+  const [stories, setStories] = useState([]);
 
-  // C: Implementamos o manipulador handleRemoveStory para remover um item da lista.
+  // C: Efeito colateral para buscar dados assíncronos.
+  // Este hook é executado apenas uma vez, quando o componente é renderizado pela primeira vez.
+  useEffect(() => {
+    getAsyncStories().then((result) => {
+      setStories(result.data.stories);
+    });
+  }, []);
+
   const handleRemoveStory = (item) => {
     const newStories = stories.filter(
       (story) => item.objectID !== story.objectID
@@ -68,7 +82,6 @@ const App = () => {
 
       <hr />
 
-      {/* D: Passamos o manipulador handleRemoveStory como prop para o componente List. */}
       <List list={searchedStories} onRemoveItem={handleRemoveStory} />
     </div>
   );
@@ -105,7 +118,6 @@ const InputWithLabel = ({
   );
 };
 
-// E: O componente List agora recebe o manipulador onRemoveItem como prop e o repassa para o Item.
 const List = ({ list, onRemoveItem }) => (
   <ul>
     {list.map((item) => (
@@ -114,7 +126,6 @@ const List = ({ list, onRemoveItem }) => (
   </ul>
 );
 
-// F: O componente Item usa o manipulador onRemoveItem para criar um botão que remove o item.
 const Item = ({ item, onRemoveItem }) => (
   <li>
     <span>
@@ -124,7 +135,6 @@ const Item = ({ item, onRemoveItem }) => (
     <span>{item.num_comments}</span>
     <span>{item.points}</span>
     <span>
-      {/* G: Botão "Dismiss" adicionado para acionar a remoção do item. */}
       <button type="button" onClick={() => onRemoveItem(item)}>
         Dismiss
       </button>
