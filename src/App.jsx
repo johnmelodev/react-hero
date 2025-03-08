@@ -1,5 +1,25 @@
 import { useState, useEffect, useRef } from "react";
 
+// A: Adicionamos uma variável inicial para as histórias (initialStories) fora do componente App.
+const initialStories = [
+  {
+    title: "React",
+    url: "https://reactjs.org/",
+    author: "Jordan Walke",
+    num_comments: 3,
+    points: 4,
+    objectID: 0,
+  },
+  {
+    title: "Redux",
+    url: "https://redux.js.org/",
+    author: "Dan Abramov, Andrew Clark",
+    num_comments: 2,
+    points: 5,
+    objectID: 1,
+  },
+];
+
 const useStorageState = (key, initialState) => {
   const [value, setValue] = useState(localStorage.getItem(key) || initialState);
 
@@ -11,26 +31,19 @@ const useStorageState = (key, initialState) => {
 };
 
 const App = () => {
-  const stories = [
-    {
-      title: "React",
-      url: "https://reactjs.org/",
-      author: "Jordan Walke",
-      num_comments: 3,
-      points: 4,
-      objectID: 0,
-    },
-    {
-      title: "Redux",
-      url: "https://redux.js.org/",
-      author: "Dan Abramov, Andrew Clark",
-      num_comments: 2,
-      points: 5,
-      objectID: 1,
-    },
-  ];
-
   const [searchTerm, setSearchTerm] = useStorageState("search", "React");
+
+  // B: Criamos um estado para as histórias (stories) usando o hook useState.
+  const [stories, setStories] = useState(initialStories);
+
+  // C: Implementamos o manipulador handleRemoveStory para remover um item da lista.
+  const handleRemoveStory = (item) => {
+    const newStories = stories.filter(
+      (story) => item.objectID !== story.objectID
+    );
+
+    setStories(newStories);
+  };
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
@@ -55,7 +68,8 @@ const App = () => {
 
       <hr />
 
-      <List list={searchedStories} />
+      {/* D: Passamos o manipulador handleRemoveStory como prop para o componente List. */}
+      <List list={searchedStories} onRemoveItem={handleRemoveStory} />
     </div>
   );
 };
@@ -68,16 +82,10 @@ const InputWithLabel = ({
   isFocused,
   children,
 }) => {
-  // A: Primeiro, criamos uma referência (`ref`) com o Hook `useRef` do React.
-  // Essa referência é um valor persistente que permanece intacto durante o ciclo de vida do componente.
   const inputRef = useRef();
 
-  // C: Terceiro, usamos o Hook `useEffect` para acessar o ciclo de vida do React.
-  // Executamos o foco no elemento quando o componente é renderizado ou suas dependências mudam.
   useEffect(() => {
     if (isFocused && inputRef.current) {
-      // D: Quarto, a propriedade `current` da referência dá acesso ao elemento DOM real.
-      // Executamos seu foco programaticamente como um efeito colateral.
       inputRef.current.focus();
     }
   }, [isFocused]);
@@ -86,10 +94,8 @@ const InputWithLabel = ({
     <>
       <label htmlFor={id}>{children}</label>
       &nbsp;
-      {/* B: Segundo, passamos a referência ao atributo `ref` do JSX do elemento. */}
-      {/* Isso associa a instância do elemento DOM à propriedade mutável `current` da referência. */}
       <input
-        ref={inputRef} // Alteração aqui: adicionamos a referência `ref` para controle imperativo.
+        ref={inputRef}
         id={id}
         type={type}
         value={value}
@@ -99,15 +105,17 @@ const InputWithLabel = ({
   );
 };
 
-const List = ({ list }) => (
+// E: O componente List agora recebe o manipulador onRemoveItem como prop e o repassa para o Item.
+const List = ({ list, onRemoveItem }) => (
   <ul>
     {list.map((item) => (
-      <Item key={item.objectID} item={item} />
+      <Item key={item.objectID} item={item} onRemoveItem={onRemoveItem} />
     ))}
   </ul>
 );
 
-const Item = ({ item }) => (
+// F: O componente Item usa o manipulador onRemoveItem para criar um botão que remove o item.
+const Item = ({ item, onRemoveItem }) => (
   <li>
     <span>
       <a href={item.url}>{item.title}</a>
@@ -115,6 +123,12 @@ const Item = ({ item }) => (
     <span>{item.author}</span>
     <span>{item.num_comments}</span>
     <span>{item.points}</span>
+    <span>
+      {/* G: Botão "Dismiss" adicionado para acionar a remoção do item. */}
+      <button type="button" onClick={() => onRemoveItem(item)}>
+        Dismiss
+      </button>
+    </span>
   </li>
 );
 
