@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const useStorageState = (key, initialState) => {
   const [value, setValue] = useState(localStorage.getItem(key) || initialState);
@@ -44,10 +44,10 @@ const App = () => {
     <div>
       <h1>My Hacker Stories</h1>
 
-      {/* A: Removida a prop `label` e substituída por um elemento filho <strong>Search:</strong> */}
       <InputWithLabel
         id="search"
         value={searchTerm}
+        isFocused
         onInputChange={handleSearch}
       >
         <strong>Search:</strong>
@@ -60,21 +60,44 @@ const App = () => {
   );
 };
 
-// B: Alterada a assinatura do componente InputWithLabel para incluir `children`
 const InputWithLabel = ({
   id,
   value,
   type = "text",
   onInputChange,
-  children, // B: Adicionada a prop `children` para acessar o conteúdo passado entre as tags
-}) => (
-  <>
-    {/* C: Substituído `{label}` por `{children}` para renderizar o conteúdo passado entre as tags */}
-    <label htmlFor={id}>{children}</label>
-    &nbsp;
-    <input id={id} type={type} value={value} onChange={onInputChange} />
-  </>
-);
+  isFocused,
+  children,
+}) => {
+  // A: Primeiro, criamos uma referência (`ref`) com o Hook `useRef` do React.
+  // Essa referência é um valor persistente que permanece intacto durante o ciclo de vida do componente.
+  const inputRef = useRef();
+
+  // C: Terceiro, usamos o Hook `useEffect` para acessar o ciclo de vida do React.
+  // Executamos o foco no elemento quando o componente é renderizado ou suas dependências mudam.
+  useEffect(() => {
+    if (isFocused && inputRef.current) {
+      // D: Quarto, a propriedade `current` da referência dá acesso ao elemento DOM real.
+      // Executamos seu foco programaticamente como um efeito colateral.
+      inputRef.current.focus();
+    }
+  }, [isFocused]);
+
+  return (
+    <>
+      <label htmlFor={id}>{children}</label>
+      &nbsp;
+      {/* B: Segundo, passamos a referência ao atributo `ref` do JSX do elemento. */}
+      {/* Isso associa a instância do elemento DOM à propriedade mutável `current` da referência. */}
+      <input
+        ref={inputRef} // Alteração aqui: adicionamos a referência `ref` para controle imperativo.
+        id={id}
+        type={type}
+        value={value}
+        onChange={onInputChange}
+      />
+    </>
+  );
+};
 
 const List = ({ list }) => (
   <ul>
