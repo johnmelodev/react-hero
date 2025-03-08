@@ -1,15 +1,13 @@
 import { useState, useEffect } from "react";
 
-// A: Custom Hook useStorageState encapsula a lógica de sincronização do estado com o `localStorage`.
 const useStorageState = (key, initialState) => {
-  // A: Usamos `key` para salvar o valor no `localStorage`.
-  const [value, setValue] = useState(localStorage.getItem(key) || initialState); // A: Adicionamos `key` como dependência para garantir que o efeito seja executado corretamente se a chave mudar.
+  const [value, setValue] = useState(localStorage.getItem(key) || initialState);
 
   useEffect(() => {
-    localStorage.setItem(key, value); // A: `key` para salvar o valor no `localStorage`.
-  }, [value, key]); // A: `key` como dependência para garantir que o efeito seja executado corretamente se a chave mudar.
+    localStorage.setItem(key, value);
+  }, [value, key]);
 
-  return [value, setValue]; // A: Retornamos o estado e a função de atualização como um array.
+  return [value, setValue];
 };
 
 const App = () => {
@@ -32,11 +30,7 @@ const App = () => {
     },
   ];
 
-  // B: Substituímos o uso direto de `useState` e `useEffect` pelo nosso gancho personalizado `useStorageState`.
-  const [searchTerm, setSearchTerm] = useStorageState(
-    "search", // B: Passamos a chave `'search'` para identificar o valor no `localStorage`.
-    "React" // B: Passamos o estado inicial `'React'` como segundo argumento.
-  );
+  const [searchTerm, setSearchTerm] = useStorageState("search", "React");
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
@@ -60,10 +54,10 @@ const App = () => {
 };
 
 const Search = ({ search, onSearch }) => (
-  <div>
+  <>
     <label htmlFor="search">Search: </label>
     <input id="search" type="text" value={search} onChange={onSearch} />
-  </div>
+  </>
 );
 
 const List = ({ list }) => (
