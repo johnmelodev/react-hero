@@ -20,17 +20,13 @@ const App = () => {
     },
   ];
 
-  const [searchTerm, setSearchTerm] = useState(""); // A: Estado `searchTerm` movido para o App.
+  // A: O estado inicial de searchTerm foi alterado de '' (string vazia) para 'React'.
+  // Isso faz com que o campo de busca já tenha um valor inicial preenchido.
+  const [searchTerm, setSearchTerm] = useState("React");
 
   const handleSearch = (event) => {
-    setSearchTerm(event.target.value); // B: Atualiza o estado no App diretamente.
+    setSearchTerm(event.target.value);
   };
-
-  // C: Cria um novo array filtrado a partir de `stories`
-  // Para cada história (story), verifica se o título (em minúsculo) inclui o termo de busca (também em minúsculo)
-  // Converte o título para minúsculo para busca case-insensitive
-  // Verifica se o título contém o termo de busca
-  // Converte o termo de busca para minúsculo para comparação
 
   const searchedStories = stories.filter((story) =>
     story.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -39,10 +35,12 @@ const App = () => {
   return (
     <div>
       <h1>My Hacker Stories</h1>
-      <Search onSearch={handleSearch} />
+      {/* B: O componente Search agora recebe uma nova prop chamada "search". //
+      Essa prop passa o valor atual do estado searchTerm para o campo de
+      entrada. */}
+      <Search search={searchTerm} onSearch={handleSearch} />
       <hr />
-      <List list={searchedStories} />{" "}
-      {/* E: Passa histórias filtradas para o List. */}
+      <List list={searchedStories} />
     </div>
   );
 };
@@ -50,8 +48,15 @@ const App = () => {
 const Search = (props) => (
   <div>
     <label htmlFor="search">Search: </label>
-    <input id="search" type="text" onChange={props.onSearch} />{" "}
-    {/* D: Passa evento diretamente para o App. */}
+    <input
+      id="search"
+      type="text"
+      // C: O atributo value foi adicionado ao input.
+      // Agora o campo de entrada usa o estado do React (props.search) como seu valor.
+      // Isso transforma o input em um componente controlado.
+      value={props.search}
+      onChange={props.onSearch}
+    />
   </div>
 );
 
