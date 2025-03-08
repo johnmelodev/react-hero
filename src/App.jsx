@@ -20,8 +20,6 @@ const App = () => {
     },
   ];
 
-  // A: O estado inicial de searchTerm foi alterado de '' (string vazia) para 'React'.
-  // Isso faz com que o campo de busca já tenha um valor inicial preenchido.
   const [searchTerm, setSearchTerm] = useState("React");
 
   const handleSearch = (event) => {
@@ -35,47 +33,51 @@ const App = () => {
   return (
     <div>
       <h1>My Hacker Stories</h1>
-      {/* B: O componente Search agora recebe uma nova prop chamada "search". //
-      Essa prop passa o valor atual do estado searchTerm para o campo de
-      entrada. */}
+
       <Search search={searchTerm} onSearch={handleSearch} />
+
       <hr />
+
       <List list={searchedStories} />
     </div>
   );
 };
 
-const Search = (props) => (
+// A: Aqui, a destruturação de objetos é usada para extrair `search` e `onSearch` diretamente da assinatura da função.
+// Isso elimina a necessidade de acessar `props.search` e `props.onSearch` dentro do componente.
+const Search = (
+  { search, onSearch } // A
+) => (
   <div>
     <label htmlFor="search">Search: </label>
     <input
       id="search"
       type="text"
-      // C: O atributo value foi adicionado ao input.
-      // Agora o campo de entrada usa o estado do React (props.search) como seu valor.
-      // Isso transforma o input em um componente controlado.
-      value={props.search}
-      onChange={props.onSearch}
+      value={search} // A: Agora `search` é usado diretamente, sem `props.search`.
+      onChange={onSearch} // A: Agora `onSearch` é usado diretamente, sem `props.onSearch`.
     />
   </div>
 );
 
-const List = (props) => (
+// B: Aqui, a destruturação de objetos é usada para extrair `list` diretamente da assinatura da função.
+const List = (
+  { list } // B
+) => (
   <ul>
-    {props.list.map((item) => (
+    {list.map((item) => (
       <Item key={item.objectID} item={item} />
     ))}
   </ul>
 );
 
-const Item = (props) => (
+// C: Aqui, a destruturação de objetos é usada para extrair `item` diretamente da assinatura da função.
+const Item = ({ item }) => (
   <li>
     <span>
-      <a href={props.item.url}>{props.item.title}</a>
+      <a href={item.url}>{item.title}</a>{" "}
     </span>
-    <span>{props.item.author}</span>
-    <span>{props.item.num_comments}</span>
-    <span>{props.item.points}</span>
+    <span>{item.author}</span> <span>{item.num_comments}</span>{" "}
+    <span>{item.points}</span>{" "}
   </li>
 );
 
