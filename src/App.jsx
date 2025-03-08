@@ -19,8 +19,6 @@ const initialStories = [
   },
 ];
 
-// A: Função que simula a busca assíncrona de dados.
-// Aqui, criamos uma promessa que resolve após 2 segundos, simulando um atraso de rede.
 const getAsyncStories = () =>
   new Promise((resolve) =>
     setTimeout(() => resolve({ data: { stories: initialStories } }), 2000)
@@ -39,16 +37,26 @@ const useStorageState = (key, initialState) => {
 const App = () => {
   const [searchTerm, setSearchTerm] = useStorageState("search", "React");
 
-  // B: Estado inicial agora é um array vazio.
-  // Queremos começar com uma lista vazia e simular a busca de histórias de forma assíncrona.
   const [stories, setStories] = useState([]);
 
-  // C: Efeito colateral para buscar dados assíncronos.
-  // Este hook é executado apenas uma vez, quando o componente é renderizado pela primeira vez.
+  // A: Novo estado booleano `isLoading` para indicar se os dados estão sendo carregados.
+  const [isLoading, setIsLoading] = useState(false);
+
+  // B: Novo estado booleano `isError` para lidar com possíveis erros durante a busca de dados.
+  const [isError, setIsError] = useState(false);
+
   useEffect(() => {
-    getAsyncStories().then((result) => {
-      setStories(result.data.stories);
-    });
+    // C: Define `isLoading` como `true` antes de iniciar a busca de dados.
+    setIsLoading(true);
+
+    getAsyncStories()
+      .then((result) => {
+        setStories(result.data.stories);
+        // D: Define `isLoading` como `false` após os dados serem carregados.
+        setIsLoading(false);
+      })
+      // E: Captura erros e define `isError` como `true` caso ocorra algum problema.
+      .catch(() => setIsError(true));
   }, []);
 
   const handleRemoveStory = (item) => {
@@ -70,7 +78,6 @@ const App = () => {
   return (
     <div>
       <h1>My Hacker Stories</h1>
-
       <InputWithLabel
         id="search"
         value={searchTerm}
@@ -79,10 +86,15 @@ const App = () => {
       >
         <strong>Search:</strong>
       </InputWithLabel>
-
       <hr />
-
-      <List list={searchedStories} onRemoveItem={handleRemoveStory} />
+      {/* F: Renderiza uma mensagem de erro caso `isError` seja `true`. */}
+      {isError && <p>Something went wrong ...</p>}
+      {/* G: Renderiza condicionalmente um indicador de carregamento ou a lista de histórias. */}
+      {isLoading ? (
+        <p>Loading ...</p>
+      ) : (
+        <List list={searchedStories} onRemoveItem={handleRemoveStory} />
+      )}
     </div>
   );
 };
