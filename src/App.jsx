@@ -1,4 +1,4 @@
-import { useState } from "react"; // A: Importação do React para usar hooks
+import { useState } from "react";
 
 const App = () => {
   const stories = [
@@ -19,30 +19,39 @@ const App = () => {
       objectID: 1,
     },
   ];
+  // A: Handler criado no componente pai (App) para receber dados do filho (Search).
+  const handleSearch = (event) => {
+    // D: Implementação do callback no pai (exibe o valor do input no console).
+    console.log(event.target.value);
+  };
 
   return (
     <div>
       <h1>My Hacker Stories</h1>
+      {/* B: Handler passado como prop (onSearch) para o componente filho (Search). */}
+      <Search onSearch={handleSearch} />
 
-      <Search />
       <hr />
+
       <List list={stories} />
     </div>
   );
 };
 
-const Search = () => {
-  const [searchTerm, setSearchTerm] = useState(""); // B: Declaração do estado com hook useState (valor inicial vazio)
+const Search = (props) => {
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleChange = (event) => {
-    setSearchTerm(event.target.value); // C: Atualiza o estado via função set (state updater function), disparando re-render
+    setSearchTerm(event.target.value);
+    // C: Callback handler executado no filho (Search), disparando a função do pai (App).
+    props.onSearch(event);
   };
 
   return (
     <div>
       <label htmlFor="search">Search: </label>
       <input id="search" type="text" onChange={handleChange} />
-      {/* D: Exibe o estado atual (searchTerm) no JSX, que será atualizado a cada re-render */}
+
       <p>
         Searching for <strong>{searchTerm}</strong>.
       </p>
