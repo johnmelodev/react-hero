@@ -19,45 +19,41 @@ const App = () => {
       objectID: 1,
     },
   ];
-  // A: Handler criado no componente pai (App) para receber dados do filho (Search).
+
+  const [searchTerm, setSearchTerm] = useState(""); // A: Estado `searchTerm` movido para o App.
+
   const handleSearch = (event) => {
-    // D: Implementação do callback no pai (exibe o valor do input no console).
-    console.log(event.target.value);
+    setSearchTerm(event.target.value); // B: Atualiza o estado no App diretamente.
   };
+
+  // C: Cria um novo array filtrado a partir de `stories`
+  // Para cada história (story), verifica se o título (em minúsculo) inclui o termo de busca (também em minúsculo)
+  // Converte o título para minúsculo para busca case-insensitive
+  // Verifica se o título contém o termo de busca
+  // Converte o termo de busca para minúsculo para comparação
+
+  const searchedStories = stories.filter((story) =>
+    story.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div>
       <h1>My Hacker Stories</h1>
-      {/* B: Handler passado como prop (onSearch) para o componente filho (Search). */}
       <Search onSearch={handleSearch} />
-
       <hr />
-
-      <List list={stories} />
+      <List list={searchedStories} />{" "}
+      {/* E: Passa histórias filtradas para o List. */}
     </div>
   );
 };
 
-const Search = (props) => {
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const handleChange = (event) => {
-    setSearchTerm(event.target.value);
-    // C: Callback handler executado no filho (Search), disparando a função do pai (App).
-    props.onSearch(event);
-  };
-
-  return (
-    <div>
-      <label htmlFor="search">Search: </label>
-      <input id="search" type="text" onChange={handleChange} />
-
-      <p>
-        Searching for <strong>{searchTerm}</strong>.
-      </p>
-    </div>
-  );
-};
+const Search = (props) => (
+  <div>
+    <label htmlFor="search">Search: </label>
+    <input id="search" type="text" onChange={props.onSearch} />{" "}
+    {/* D: Passa evento diretamente para o App. */}
+  </div>
+);
 
 const List = (props) => (
   <ul>
