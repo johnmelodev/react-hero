@@ -1,18 +1,16 @@
-import { useState } from 'react';
-
 const list = [
   {
-    title: 'React',
-    url: 'https://reactjs.org/',
-    author: 'Jordan Walke',
+    title: "React",
+    url: "https://reactjs.org/",
+    author: "Jordan Walke",
     num_comments: 3,
     points: 4,
     objectID: 0,
   },
   {
-    title: 'Redux',
-    url: 'https://redux.js.org/',
-    author: 'Dan Abramov, Andrew Clark',
+    title: "Redux",
+    url: "https://redux.js.org/",
+    author: "Dan Abramov, Andrew Clark",
     num_comments: 2,
     points: 5,
     objectID: 1,
@@ -22,32 +20,46 @@ const list = [
 function App() {
   return (
     <div>
-      <h1>My Hacker Stories</h1> 
-      {/* A) O título agora é fixo, não depende mais da função getTitle */}
+      <h1>My Hacker Stories</h1>
 
-      <label htmlFor="search">Search: </label>
-      <input id="search" type="text" />
-
+      {/* A: Substituímos o label e input pelo componente Search, encapsulando a busca. */}
+      <Search />
       <hr />
-
-      <ul>
-        {/* B) Um array "list" foi adicionado e está sendo mapeado para criar a lista */}
-        {list.map(function (item) {
-          return (
-            <li key={item.objectID}>
-              <span>
-                <a href={item.url}>{item.title}</a>
-              </span>
-              <span>{item.author}</span>
-              <span>{item.num_comments}</span>
-              <span>{item.points}</span>
-            </li>
-          );
-        })}
-      </ul>
+      {/* B: Substituímos a lista inlined (ul/li) pelo componente List, isolando sua lógica. */}
+      <List />
     </div>
   );
 }
 
-export default App;
+// C: Este é o novo componente Search, que encapsula os elementos relacionados à busca.
+function Search() {
+  return (
+    <div>
+      {/* Mantivemos os mesmos elementos, mas agora eles estão isolados no componente Search. */}
+      <label htmlFor="search">Search: </label>
+      <input id="search" type="text" />
+    </div>
+  );
+}
 
+// D: Este é o novo componente List, que encapsula a funcionalidade de renderização da lista.
+function List() {
+  return (
+    <ul>
+      {list.map(function (item) {
+        return (
+          <li key={item.objectID}>
+            <span>
+              <a href={item.url}>{item.title}</a>
+            </span>
+            <span>{item.author}</span>
+            <span>{item.num_comments}</span>
+            <span>{item.points}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+export default App;
