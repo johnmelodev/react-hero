@@ -44,7 +44,14 @@ const App = () => {
     <div>
       <h1>My Hacker Stories</h1>
 
-      <Search search={searchTerm} onSearch={handleSearch} />
+      {/* A: Substituímos o componente Search pelo InputWithLabel */}
+      {/* O novo componente é mais genérico e aceita props dinâmicas */}
+      <InputWithLabel
+        id="search"
+        label="Search"
+        value={searchTerm}
+        onInputChange={handleSearch}
+      />
 
       <hr />
 
@@ -53,10 +60,25 @@ const App = () => {
   );
 };
 
-const Search = ({ search, onSearch }) => (
+// B: Renomeamos o componente Search para InputWithLabel
+// C: Adicionamos novas props (id, label, type) para torná-lo reutilizável
+const InputWithLabel = ({
+  id,
+  label,
+  value,
+  type = "text", // D: Adicionamos um valor padrão para o tipo de entrada
+  onInputChange,
+}) => (
   <>
-    <label htmlFor="search">Search: </label>
-    <input id="search" type="text" value={search} onChange={onSearch} />
+    {/* E: Generalizamos o rótulo para aceitar qualquer texto dinâmico */}
+    <label htmlFor={id}>{label}</label>
+    &nbsp;
+    <input
+      id={id} // F: Usamos o ID dinâmico para evitar duplicação
+      type={type} // G: O tipo de entrada agora pode ser personalizado
+      value={value}
+      onChange={onInputChange}
+    />
   </>
 );
 
