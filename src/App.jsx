@@ -17,7 +17,6 @@ const list = [
   },
 ];
 
-// A: Refatoração do componente App para arrow function.
 const App = () => (
   <div>
     <h1>My Hacker Stories</h1>
@@ -30,16 +29,24 @@ const App = () => (
   </div>
 );
 
-// B: Refatoração do componente Search para arrow function
-// Omitimos as chaves `{}` e o `return`, pois o JSX é retornado diretamente.
-const Search = () => (
-  <div>
-    <label htmlFor="search">Search: </label>
-    <input id="search" type="text" />
-  </div>
-);
+const Search = () => {
+  // A: Aqui definimos uma função manipuladora (handler) chamada handleChange.
+  // Essa função é chamada sempre que ocorre um evento de mudança no campo de entrada.
+  const handleChange = (event) => {
+    console.log(event);
+    console.log(event.target.value);
+  };
 
-// C: Refatoração do componente List para arrow function.
+  return (
+    <div>
+      <label htmlFor="search">Search: </label>
+      {/* B: Aqui adicionamos o evento onChange ao elemento input. */}
+      {/* O atributo onChange recebe a função handleChange como referência, sem invocá-la (handleChange, não handleChange()). */}
+      <input id="search" type="text" onChange={handleChange} />
+    </div>
+  );
+};
+
 const List = () => (
   <ul>
     {list.map((item) => (
