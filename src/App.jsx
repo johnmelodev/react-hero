@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const App = () => {
   const stories = [
@@ -20,7 +20,18 @@ const App = () => {
     },
   ];
 
-  const [searchTerm, setSearchTerm] = useState("React");
+  // A: Inicializa o estado com o valor do localStorage (se existir) ou usa "React" como padrão.
+  // Isso garante que o termo de pesquisa seja recuperado ao reiniciar o navegador.
+  const [searchTerm, setSearchTerm] = useState(
+    localStorage.getItem("search") || "React"
+  );
+
+  // B: Usa useEffect para centralizar o efeito colateral (atualização do localStorage).
+  // O array de dependências [searchTerm] garante que o localStorage seja atualizado
+  // sempre que o estado searchTerm mudar (ex: ao digitar no campo de busca).
+  useEffect(() => {
+    localStorage.setItem("search", searchTerm);
+  }, [searchTerm]);
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
@@ -43,26 +54,14 @@ const App = () => {
   );
 };
 
-// A: Aqui, a destruturação de objetos é usada para extrair `search` e `onSearch` diretamente da assinatura da função.
-// Isso elimina a necessidade de acessar `props.search` e `props.onSearch` dentro do componente.
-const Search = (
-  { search, onSearch } // A
-) => (
+const Search = ({ search, onSearch }) => (
   <div>
     <label htmlFor="search">Search: </label>
-    <input
-      id="search"
-      type="text"
-      value={search} // A: Agora `search` é usado diretamente, sem `props.search`.
-      onChange={onSearch} // A: Agora `onSearch` é usado diretamente, sem `props.onSearch`.
-    />
+    <input id="search" type="text" value={search} onChange={onSearch} />
   </div>
 );
 
-// B: Aqui, a destruturação de objetos é usada para extrair `list` diretamente da assinatura da função.
-const List = (
-  { list } // B
-) => (
+const List = ({ list }) => (
   <ul>
     {list.map((item) => (
       <Item key={item.objectID} item={item} />
@@ -70,14 +69,14 @@ const List = (
   </ul>
 );
 
-// C: Aqui, a destruturação de objetos é usada para extrair `item` diretamente da assinatura da função.
 const Item = ({ item }) => (
   <li>
     <span>
-      <a href={item.url}>{item.title}</a>{" "}
+      <a href={item.url}>{item.title}</a>
     </span>
-    <span>{item.author}</span> <span>{item.num_comments}</span>{" "}
-    <span>{item.points}</span>{" "}
+    <span>{item.author}</span>
+    <span>{item.num_comments}</span>
+    <span>{item.points}</span>
   </li>
 );
 
