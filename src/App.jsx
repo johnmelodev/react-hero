@@ -1,5 +1,6 @@
+import { useState } from "react"; // A: Importação do React para usar hooks
+
 const App = () => {
-  // A: Movemos a lista do escopo global para dentro do componente App.
   const stories = [
     {
       title: "React",
@@ -25,41 +26,41 @@ const App = () => {
 
       <Search />
       <hr />
-      {/* B: Passamos a lista como uma prop para o componente List. "list" é usado para enviar a variável "stories" ao componente List. */}
       <List list={stories} />
     </div>
   );
 };
 
 const Search = () => {
+  const [searchTerm, setSearchTerm] = useState(""); // B: Declaração do estado com hook useState (valor inicial vazio)
+
   const handleChange = (event) => {
-    console.log(event);
-    console.log(event.target.value);
+    setSearchTerm(event.target.value); // C: Atualiza o estado via função set (state updater function), disparando re-render
   };
 
   return (
     <div>
       <label htmlFor="search">Search: </label>
       <input id="search" type="text" onChange={handleChange} />
+      {/* D: Exibe o estado atual (searchTerm) no JSX, que será atualizado a cada re-render */}
+      <p>
+        Searching for <strong>{searchTerm}</strong>.
+      </p>
     </div>
   );
 };
 
-// C: O componente List agora recebe props como parâmetro. Permite acessar a lista passada pelo componente pai (App)
 const List = (props) => (
   <ul>
-    {/* C: Usamos props.list para acessar a lista passada como propriedade. Em seguida, usamos map() para iterar sobre os itens da lista. */}
     {props.list.map((item) => (
       <Item key={item.objectID} item={item} />
     ))}
   </ul>
 );
 
-// D: Criamos um novo componente chamado Item. Este componente é responsável por renderizar cada item da lista.
 const Item = (props) => (
   <li>
     <span>
-      {/* D: Acessamos as propriedades do item através de props.item. */}
       <a href={props.item.url}>{props.item.title}</a>
     </span>
     <span>{props.item.author}</span>
