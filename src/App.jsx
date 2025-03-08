@@ -17,49 +17,42 @@ const list = [
   },
 ];
 
-function App() {
-  return (
-    <div>
-      <h1>My Hacker Stories</h1>
+// A: Refatoração do componente App para arrow function.
+const App = () => (
+  <div>
+    <h1>My Hacker Stories</h1>
 
-      {/* A: Substituímos o label e input pelo componente Search, encapsulando a busca. */}
-      <Search />
-      <hr />
-      {/* B: Substituímos a lista inlined (ul/li) pelo componente List, isolando sua lógica. */}
-      <List />
-    </div>
-  );
-}
+    <Search />
 
-// C: Este é o novo componente Search, que encapsula os elementos relacionados à busca.
-function Search() {
-  return (
-    <div>
-      {/* Mantivemos os mesmos elementos, mas agora eles estão isolados no componente Search. */}
-      <label htmlFor="search">Search: </label>
-      <input id="search" type="text" />
-    </div>
-  );
-}
+    <hr />
 
-// D: Este é o novo componente List, que encapsula a funcionalidade de renderização da lista.
-function List() {
-  return (
-    <ul>
-      {list.map(function (item) {
-        return (
-          <li key={item.objectID}>
-            <span>
-              <a href={item.url}>{item.title}</a>
-            </span>
-            <span>{item.author}</span>
-            <span>{item.num_comments}</span>
-            <span>{item.points}</span>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
+    <List />
+  </div>
+);
+
+// B: Refatoração do componente Search para arrow function
+// Omitimos as chaves `{}` e o `return`, pois o JSX é retornado diretamente.
+const Search = () => (
+  <div>
+    <label htmlFor="search">Search: </label>
+    <input id="search" type="text" />
+  </div>
+);
+
+// C: Refatoração do componente List para arrow function.
+const List = () => (
+  <ul>
+    {list.map((item) => (
+      <li key={item.objectID}>
+        <span>
+          <a href={item.url}>{item.title}</a>
+        </span>
+        <span>{item.author}</span>
+        <span>{item.num_comments}</span>
+        <span>{item.points}</span>
+      </li>
+    ))}
+  </ul>
+);
 
 export default App;
