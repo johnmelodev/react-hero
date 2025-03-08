@@ -1,5 +1,17 @@
 import { useState, useEffect } from "react";
 
+// A: Custom Hook useStorageState encapsula a lógica de sincronização do estado com o `localStorage`.
+const useStorageState = (key, initialState) => {
+  // A: Usamos `key` para salvar o valor no `localStorage`.
+  const [value, setValue] = useState(localStorage.getItem(key) || initialState); // A: Adicionamos `key` como dependência para garantir que o efeito seja executado corretamente se a chave mudar.
+
+  useEffect(() => {
+    localStorage.setItem(key, value); // A: `key` para salvar o valor no `localStorage`.
+  }, [value, key]); // A: `key` como dependência para garantir que o efeito seja executado corretamente se a chave mudar.
+
+  return [value, setValue]; // A: Retornamos o estado e a função de atualização como um array.
+};
+
 const App = () => {
   const stories = [
     {
@@ -20,18 +32,11 @@ const App = () => {
     },
   ];
 
-  // A: Inicializa o estado com o valor do localStorage (se existir) ou usa "React" como padrão.
-  // Isso garante que o termo de pesquisa seja recuperado ao reiniciar o navegador.
-  const [searchTerm, setSearchTerm] = useState(
-    localStorage.getItem("search") || "React"
+  // B: Substituímos o uso direto de `useState` e `useEffect` pelo nosso gancho personalizado `useStorageState`.
+  const [searchTerm, setSearchTerm] = useStorageState(
+    "search", // B: Passamos a chave `'search'` para identificar o valor no `localStorage`.
+    "React" // B: Passamos o estado inicial `'React'` como segundo argumento.
   );
-
-  // B: Usa useEffect para centralizar o efeito colateral (atualização do localStorage).
-  // O array de dependências [searchTerm] garante que o localStorage seja atualizado
-  // sempre que o estado searchTerm mudar (ex: ao digitar no campo de busca).
-  useEffect(() => {
-    localStorage.setItem("search", searchTerm);
-  }, [searchTerm]);
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
