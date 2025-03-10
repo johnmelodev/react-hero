@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useReducer } from "react";
 
 const initialStories = [
   {
@@ -24,6 +24,20 @@ const getAsyncStories = () =>
     setTimeout(() => resolve({ data: { stories: initialStories } }), 2000)
   );
 
+const storiesReducer = (state, action) => {
+  // A: Introduzimos uma função reducer para gerenciar as transições de estado.
+  switch (action.type) {
+    case "SET_STORIES": // A: O tipo 'SET_STORIES' define como o estado deve ser atualizado quando novas histórias são definidas.
+      return action.payload; // A: O novo estado é simplesmente o payload da ação.
+    case "REMOVE_STORY": // A: O tipo 'REMOVE_STORY' define como remover uma história do estado.
+      return state.filter(
+        (story) => action.payload.objectID !== story.objectID // A: Filtra o estado atual para excluir a história com o ID correspondente.
+      );
+    default:
+      throw new Error(); // A: Se o tipo da ação não for reconhecido, lança um erro para lembrar que a implementação não está coberta.
+  }
+};
+
 const useStorageState = (key, initialState) => {
   const [value, setValue] = useState(localStorage.getItem(key) || initialState);
 
@@ -37,34 +51,35 @@ const useStorageState = (key, initialState) => {
 const App = () => {
   const [searchTerm, setSearchTerm] = useStorageState("search", "React");
 
-  const [stories, setStories] = useState([]);
-
-  // A: Novo estado booleano `isLoading` para indicar se os dados estão sendo carregados.
+  const [stories, dispatchStories] = useReducer(
+    // B: Substituímos useState por useReducer para gerenciar o estado stories.
+    storiesReducer,
+    []
+  );
   const [isLoading, setIsLoading] = useState(false);
-
-  // B: Novo estado booleano `isError` para lidar com possíveis erros durante a busca de dados.
   const [isError, setIsError] = useState(false);
 
   useEffect(() => {
-    // C: Define `isLoading` como `true` antes de iniciar a busca de dados.
     setIsLoading(true);
 
     getAsyncStories()
       .then((result) => {
-        setStories(result.data.stories);
-        // D: Define `isLoading` como `false` após os dados serem carregados.
+        dispatchStories({
+          // C: Em vez de usar setStories, usamos dispatchStories para enviar uma ação ao reducer.
+          type: "SET_STORIES", // C: O tipo da ação indica que estamos definindo as histórias.
+          payload: result.data.stories, // C: O payload contém os dados das histórias a serem definidos como estado.
+        });
         setIsLoading(false);
       })
-      // E: Captura erros e define `isError` como `true` caso ocorra algum problema.
       .catch(() => setIsError(true));
   }, []);
 
   const handleRemoveStory = (item) => {
-    const newStories = stories.filter(
-      (story) => item.objectID !== story.objectID
-    );
-
-    setStories(newStories);
+    dispatchStories({
+      // D: Em vez de calcular o novo estado diretamente aqui, enviamos uma ação ao reducer.
+      type: "REMOVE_STORY", // D: O tipo da ação indica que estamos removendo uma história.
+      payload: item, // D: O payload contém a história a ser removida.
+    });
   };
 
   const handleSearch = (event) => {
@@ -78,6 +93,7 @@ const App = () => {
   return (
     <div>
       <h1>My Hacker Stories</h1>
+
       <InputWithLabel
         id="search"
         value={searchTerm}
@@ -86,10 +102,11 @@ const App = () => {
       >
         <strong>Search:</strong>
       </InputWithLabel>
+
       <hr />
-      {/* F: Renderiza uma mensagem de erro caso `isError` seja `true`. */}
+
       {isError && <p>Something went wrong ...</p>}
-      {/* G: Renderiza condicionalmente um indicador de carregamento ou a lista de histórias. */}
+
       {isLoading ? (
         <p>Loading ...</p>
       ) : (
