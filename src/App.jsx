@@ -25,16 +25,36 @@ const getAsyncStories = () =>
   );
 
 const storiesReducer = (state, action) => {
-  // A: Introduzimos uma função reducer para gerenciar as transições de estado.
   switch (action.type) {
-    case "SET_STORIES": // A: O tipo 'SET_STORIES' define como o estado deve ser atualizado quando novas histórias são definidas.
-      return action.payload; // A: O novo estado é simplesmente o payload da ação.
-    case "REMOVE_STORY": // A: O tipo 'REMOVE_STORY' define como remover uma história do estado.
-      return state.filter(
-        (story) => action.payload.objectID !== story.objectID // A: Filtra o estado atual para excluir a história com o ID correspondente.
-      );
+    case "STORIES_FETCH_INIT": // A: Novo caso para inicializar a busca de histórias.
+      return {
+        ...state,
+        isLoading: true, // A: Define o estado de carregamento como verdadeiro.
+        isError: false, // A: Garante que não haja erro ao iniciar a busca.
+      };
+    case "STORIES_FETCH_SUCCESS": // B: Novo caso para sucesso na busca de histórias.
+      return {
+        ...state,
+        isLoading: false, // B: Desativa o estado de carregamento após sucesso.
+        isError: false, // B: Garante que não haja erro após sucesso.
+        data: action.payload, // B: Atualiza os dados com as histórias recebidas.
+      };
+    case "STORIES_FETCH_FAILURE": // C: Novo caso para falha na busca de histórias.
+      return {
+        ...state,
+        isLoading: false, // C: Desativa o estado de carregamento após falha.
+        isError: true, // C: Define o estado de erro como verdadeiro.
+      };
+    case "REMOVE_STORY":
+      return {
+        ...state,
+        data: state.data.filter(
+          // D: Alteração para operar sobre `state.data`.
+          (story) => action.payload.objectID !== story.objectID
+        ),
+      };
     default:
-      throw new Error(); // A: Se o tipo da ação não for reconhecido, lança um erro para lembrar que a implementação não está coberta.
+      throw new Error();
   }
 };
 
@@ -52,33 +72,29 @@ const App = () => {
   const [searchTerm, setSearchTerm] = useStorageState("search", "React");
 
   const [stories, dispatchStories] = useReducer(
-    // B: Substituímos useState por useReducer para gerenciar o estado stories.
     storiesReducer,
-    []
+    { data: [], isLoading: false, isError: false } // E: Estado inicial agora é um objeto complexo.
   );
-  const [isLoading, setIsLoading] = useState(false);
-  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
-    setIsLoading(true);
+    dispatchStories({ type: "STORIES_FETCH_INIT" }); // F: Inicializa a busca de histórias.
 
     getAsyncStories()
       .then((result) => {
         dispatchStories({
-          // C: Em vez de usar setStories, usamos dispatchStories para enviar uma ação ao reducer.
-          type: "SET_STORIES", // C: O tipo da ação indica que estamos definindo as histórias.
-          payload: result.data.stories, // C: O payload contém os dados das histórias a serem definidos como estado.
+          type: "STORIES_FETCH_SUCCESS",
+          payload: result.data.stories, // G: Atualiza os dados com as histórias recebidas.
         });
-        setIsLoading(false);
       })
-      .catch(() => setIsError(true));
+      .catch(
+        () => dispatchStories({ type: "STORIES_FETCH_FAILURE" }) // H: Trata falhas na busca.
+      );
   }, []);
 
   const handleRemoveStory = (item) => {
     dispatchStories({
-      // D: Em vez de calcular o novo estado diretamente aqui, enviamos uma ação ao reducer.
-      type: "REMOVE_STORY", // D: O tipo da ação indica que estamos removendo uma história.
-      payload: item, // D: O payload contém a história a ser removida.
+      type: "REMOVE_STORY",
+      payload: item,
     });
   };
 
@@ -86,14 +102,15 @@ const App = () => {
     setSearchTerm(event.target.value);
   };
 
-  const searchedStories = stories.filter((story) =>
-    story.title.toLowerCase().includes(searchTerm.toLowerCase())
+  const searchedStories = stories.data.filter(
+    (
+      story // I: Acesso aos dados via `stories.data`.
+    ) => story.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div>
       <h1>My Hacker Stories</h1>
-
       <InputWithLabel
         id="search"
         value={searchTerm}
@@ -102,13 +119,12 @@ const App = () => {
       >
         <strong>Search:</strong>
       </InputWithLabel>
-
       <hr />
+      {stories.isError && <p>Something went wrong ...</p>}
+      {/* J: Verifica erro diretamente no estado unificado.*/}
 
-      {isError && <p>Something went wrong ...</p>}
-
-      {isLoading ? (
-        <p>Loading ...</p>
+      {stories.isLoading ? (
+        <p>Loading ...</p> // K: Verifica carregamento diretamente no estado unificado.
       ) : (
         <List list={searchedStories} onRemoveItem={handleRemoveStory} />
       )}
