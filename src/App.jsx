@@ -1,4 +1,5 @@
 import * as React from "react";
+import axios from "axios"; // A: Importação do Axios
 
 const storiesReducer = (state, action) => {
   switch (action.type) {
@@ -50,7 +51,6 @@ const API_ENDPOINT = "https://hn.algolia.com/api/v1/search?query=";
 const App = () => {
   const [searchTerm, setSearchTerm] = useStorageState("search", "React");
 
-  // A: Novo estado `url` foi adicionado para controlar a URL da API.
   const [url, setUrl] = React.useState(`${API_ENDPOINT}${searchTerm}`);
 
   const [stories, dispatchStories] = React.useReducer(storiesReducer, {
@@ -62,19 +62,20 @@ const App = () => {
   const handleFetchStories = React.useCallback(() => {
     dispatchStories({ type: "STORIES_FETCH_INIT" });
 
-    fetch(url) // B: Agora usa o estado `url` em vez de construir a URL dinamicamente.
-      .then((response) => response.json())
+    // B: Substituição da API fetch por axios.get(url)
+    axios
+      .get(url) // Axios é usado para fazer a requisição HTTP
       .then((result) => {
         dispatchStories({
           type: "STORIES_FETCH_SUCCESS",
-          payload: result.hits,
+          payload: result.data.hits, // Axios encapsula os dados em result.data
         });
       })
       .catch(() => dispatchStories({ type: "STORIES_FETCH_FAILURE" }));
-  }, [url]); // C: Dependência agora é `url`, não mais `searchTerm`.
+  }, [url]); // C: A função continua monitorando a variável url
 
   React.useEffect(() => {
-    handleFetchStories();
+    handleFetchStories(); // D: Chama a função para buscar histórias assim que o componente é montado
   }, [handleFetchStories]);
 
   const handleRemoveStory = (item) => {
@@ -85,12 +86,11 @@ const App = () => {
   };
 
   const handleSearchInput = (event) => {
-    setSearchTerm(event.target.value);
+    setSearchTerm(event.target.value); // E: Mantém a funcionalidade original
   };
 
-  // D: Nova função para atualizar a URL quando o usuário submete a pesquisa.
   const handleSearchSubmit = () => {
-    setUrl(`${API_ENDPOINT}${searchTerm}`);
+    setUrl(`${API_ENDPOINT}${searchTerm}`); // F: Mantém a funcionalidade original
   };
 
   return (
@@ -101,17 +101,12 @@ const App = () => {
         id="search"
         value={searchTerm}
         isFocused
-        onInputChange={handleSearchInput} // E: Atualiza `searchTerm` ao digitar.
+        onInputChange={handleSearchInput}
       >
         <strong>Search:</strong>
       </InputWithLabel>
 
-      {/* F: Botão "Submit" foi adicionado para confirmar a pesquisa. */}
-      <button
-        type="button"
-        disabled={!searchTerm} // G: Desabilita o botão se `searchTerm` estiver vazio.
-        onClick={handleSearchSubmit} // H: Atualiza a URL e dispara a busca.
-      >
+      <button type="button" disabled={!searchTerm} onClick={handleSearchSubmit}>
         Submit
       </button>
 
