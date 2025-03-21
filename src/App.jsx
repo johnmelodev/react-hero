@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useReducer } from "react";
+import * as React from "react";
 
 const storiesReducer = (state, action) => {
   switch (action.type) {
@@ -34,43 +34,42 @@ const storiesReducer = (state, action) => {
 };
 
 const useStorageState = (key, initialState) => {
-  const [value, setValue] = useState(localStorage.getItem(key) || initialState);
-
-  useEffect(() => {
+  const [value, setValue] = React.useState(
+    localStorage.getItem(key) || initialState
+  );
+  React.useEffect(() => {
     localStorage.setItem(key, value);
   }, [value, key]);
-
   return [value, setValue];
 };
 
-// A: Define o endpoint da API do Hacker News.
 const API_ENDPOINT = "https://hn.algolia.com/api/v1/search?query=";
 
 const App = () => {
   const [searchTerm, setSearchTerm] = useStorageState("search", "React");
-
-  const [stories, dispatchStories] = useReducer(storiesReducer, {
+  const [stories, dispatchStories] = React.useReducer(storiesReducer, {
     data: [],
     isLoading: false,
     isError: false,
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
+    // A: Verifica se o searchTerm é uma string vazia. Se for, evita a requisição à API.
+    if (searchTerm === "") return;
+
     dispatchStories({ type: "STORIES_FETCH_INIT" });
 
-    // B: Usa a API fetch para buscar dados diretamente da API do Hacker News.
-    fetch(`${API_ENDPOINT}react`)
-      // C: Converte a resposta da API para JSON.
+    // B: Usa o searchTerm dinâmico na URL da API, permitindo que a busca seja feita no servidor.
+    fetch(`${API_ENDPOINT}${searchTerm}`)
       .then((response) => response.json())
       .then((result) => {
-        // D: Envia os dados retornados pela API como payload para o estado.
         dispatchStories({
           type: "STORIES_FETCH_SUCCESS",
-          payload: result.hits, // E: A estrutura de dados da API usa "hits" para armazenar histórias.
+          payload: result.hits,
         });
       })
       .catch(() => dispatchStories({ type: "STORIES_FETCH_FAILURE" }));
-  }, []);
+  }, [searchTerm]); // C: Adiciona searchTerm como dependência, para que o efeito seja executado sempre que o termo mudar.
 
   const handleRemoveStory = (item) => {
     dispatchStories({
@@ -83,14 +82,9 @@ const App = () => {
     setSearchTerm(event.target.value);
   };
 
-  const searchedStories = stories.data.filter((story) =>
-    story.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
     <div>
       <h1>My Hacker Stories</h1>
-
       <InputWithLabel
         id="search"
         value={searchTerm}
@@ -99,15 +93,13 @@ const App = () => {
       >
         <strong>Search:</strong>
       </InputWithLabel>
-
       <hr />
-
       {stories.isError && <p>Something went wrong ...</p>}
-
       {stories.isLoading ? (
         <p>Loading ...</p>
       ) : (
-        <List list={searchedStories} onRemoveItem={handleRemoveStory} />
+        // D: Removeu o uso de searchedStories, pois os dados filtrados agora vêm diretamente da API.
+        <List list={stories.data} onRemoveItem={handleRemoveStory} />
       )}
     </div>
   );
@@ -121,14 +113,12 @@ const InputWithLabel = ({
   isFocused,
   children,
 }) => {
-  const inputRef = useRef();
-
-  useEffect(() => {
+  const inputRef = React.useRef();
+  React.useEffect(() => {
     if (isFocused && inputRef.current) {
       inputRef.current.focus();
     }
   }, [isFocused]);
-
   return (
     <>
       <label htmlFor={id}>{children}</label>
