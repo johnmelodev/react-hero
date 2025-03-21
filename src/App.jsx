@@ -37,9 +37,11 @@ const useStorageState = (key, initialState) => {
   const [value, setValue] = React.useState(
     localStorage.getItem(key) || initialState
   );
+
   React.useEffect(() => {
     localStorage.setItem(key, value);
   }, [value, key]);
+
   return [value, setValue];
 };
 
@@ -47,19 +49,19 @@ const API_ENDPOINT = "https://hn.algolia.com/api/v1/search?query=";
 
 const App = () => {
   const [searchTerm, setSearchTerm] = useStorageState("search", "React");
+
   const [stories, dispatchStories] = React.useReducer(storiesReducer, {
     data: [],
     isLoading: false,
     isError: false,
   });
 
-  React.useEffect(() => {
-    // A: Verifica se o searchTerm é uma string vazia. Se for, evita a requisição à API.
-    if (searchTerm === "") return;
+  // A: Extraímos a lógica de busca de dados para uma função separada usando useCallback.
+  const handleFetchStories = React.useCallback(() => {
+    if (!searchTerm) return;
 
     dispatchStories({ type: "STORIES_FETCH_INIT" });
 
-    // B: Usa o searchTerm dinâmico na URL da API, permitindo que a busca seja feita no servidor.
     fetch(`${API_ENDPOINT}${searchTerm}`)
       .then((response) => response.json())
       .then((result) => {
@@ -69,7 +71,12 @@ const App = () => {
         });
       })
       .catch(() => dispatchStories({ type: "STORIES_FETCH_FAILURE" }));
-  }, [searchTerm]); // C: Adiciona searchTerm como dependência, para que o efeito seja executado sempre que o termo mudar.
+  }, [searchTerm]); // B: O array de dependências garante que a função seja recriada apenas quando searchTerm muda.
+
+  // C: O useEffect agora chama a função memorizada handleFetchStories.
+  React.useEffect(() => {
+    handleFetchStories();
+  }, [handleFetchStories]); // D: handleFetchStories é adicionado como dependência para garantir que o efeito execute quando a função muda.
 
   const handleRemoveStory = (item) => {
     dispatchStories({
@@ -85,6 +92,7 @@ const App = () => {
   return (
     <div>
       <h1>My Hacker Stories</h1>
+
       <InputWithLabel
         id="search"
         value={searchTerm}
@@ -93,12 +101,14 @@ const App = () => {
       >
         <strong>Search:</strong>
       </InputWithLabel>
+
       <hr />
+
       {stories.isError && <p>Something went wrong ...</p>}
+
       {stories.isLoading ? (
         <p>Loading ...</p>
       ) : (
-        // D: Removeu o uso de searchedStories, pois os dados filtrados agora vêm diretamente da API.
         <List list={stories.data} onRemoveItem={handleRemoveStory} />
       )}
     </div>
@@ -114,11 +124,13 @@ const InputWithLabel = ({
   children,
 }) => {
   const inputRef = React.useRef();
+
   React.useEffect(() => {
     if (isFocused && inputRef.current) {
       inputRef.current.focus();
     }
   }, [isFocused]);
+
   return (
     <>
       <label htmlFor={id}>{children}</label>
