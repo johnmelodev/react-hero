@@ -2,15 +2,53 @@ import * as React from "react";
 import axios from "axios";
 
 const storiesReducer = (state, action) => {
-  // Reducer continua igual ao código 1.
+  switch (action.type) {
+    case "STORIES_FETCH_INIT":
+      return {
+        ...state,
+        isLoading: true,
+        isError: false,
+      };
+    case "STORIES_FETCH_SUCCESS":
+      return {
+        ...state,
+        isLoading: false,
+        isError: false,
+        data: action.payload,
+      };
+    case "STORIES_FETCH_FAILURE":
+      return {
+        ...state,
+        isLoading: false,
+        isError: true,
+      };
+    case "REMOVE_STORY":
+      return {
+        ...state,
+        data: state.data.filter(
+          (story) => action.payload.objectID !== story.objectID
+        ),
+      };
+    default:
+      throw new Error();
+  }
 };
 
 const useStorageState = (key, initialState) => {
-  // Hook customizado continua igual ao código 1.
+  const [value, setValue] = React.useState(
+    localStorage.getItem(key) || initialState
+  );
+
+  React.useEffect(() => {
+    localStorage.setItem(key, value);
+  }, [value, key]);
+
+  return [value, setValue];
 };
 
 const API_ENDPOINT = "https://hn.algolia.com/api/v1/search?query=";
 
+// A) Criando o componente SearchForm
 const App = () => {
   const [searchTerm, setSearchTerm] = useStorageState("search", "React");
 
@@ -22,56 +60,53 @@ const App = () => {
     isError: false,
   });
 
-  // Alteração A: Refatoração para async/await
   const handleFetchStories = React.useCallback(async () => {
-    dispatchStories({ type: "STORIES_FETCH_INIT" }); // Inicializa o estado de carregamento.
+    dispatchStories({ type: "STORIES_FETCH_INIT" });
 
     try {
-      // Bloco try/catch adicionado (Alteração B).
-      const result = await axios.get(url); // Alteração C: Substituição do .then() pelo await.
+      const result = await axios.get(url);
 
       dispatchStories({
         type: "STORIES_FETCH_SUCCESS",
         payload: result.data.hits,
-      }); // Manipula o sucesso da requisição.
+      });
     } catch {
-      // Alteração D: Substituição do .catch() pelo bloco catch.
-      dispatchStories({ type: "STORIES_FETCH_FAILURE" }); // Trata o erro caso ocorra.
+      dispatchStories({ type: "STORIES_FETCH_FAILURE" });
     }
-  }, [url]); // Dependências mantidas iguais.
+  }, [url]);
 
   React.useEffect(() => {
-    handleFetchStories(); // Chama a função de busca de histórias.
-  }, [handleFetchStories]); // Depende da função atualizada.
+    handleFetchStories();
+  }, [handleFetchStories]);
 
   const handleRemoveStory = (item) => {
-    // Função para remover uma história continua igual ao código 1.
+    dispatchStories({
+      type: "REMOVE_STORY",
+      payload: item,
+    });
   };
 
   const handleSearchInput = (event) => {
-    setSearchTerm(event.target.value); // Atualiza o termo de pesquisa.
+    setSearchTerm(event.target.value); // Mantém o mesmo comportamento
   };
 
-  const handleSearchSubmit = () => {
-    setUrl(`${API_ENDPOINT}${searchTerm}`); // Atualiza a URL com o novo termo de pesquisa.
+  // B) Alterando handleSearchSubmit para trabalhar com o formulário
+  const handleSearchSubmit = (event) => {
+    setUrl(`${API_ENDPOINT}${searchTerm}`); // Atualiza a URL com o termo de busca
+
+    event.preventDefault(); // Evita o comportamento padrão de recarga da página
   };
 
   return (
     <div>
       <h1>My Hacker Stories</h1>
 
-      <InputWithLabel
-        id="search"
-        value={searchTerm}
-        isFocused
-        onInputChange={handleSearchInput}
-      >
-        <strong>Search:</strong>
-      </InputWithLabel>
-
-      <button type="button" disabled={!searchTerm} onClick={handleSearchSubmit}>
-        Submit
-      </button>
+      {/* C) Introduzindo o componente SearchForm */}
+      <SearchForm
+        searchTerm={searchTerm}
+        onSearchInput={handleSearchInput}
+        onSearchSubmit={handleSearchSubmit}
+      />
 
       <hr />
 
@@ -86,4 +121,80 @@ const App = () => {
   );
 };
 
-// Componentes InputWithLabel, List e Item continuam iguais ao código 1.
+// D) Criando o componente SearchForm
+const SearchForm = ({ searchTerm, onSearchInput, onSearchSubmit }) => (
+  <form onSubmit={onSearchSubmit}>
+    {" "}
+    {/* Atributo onSubmit liga o formulário à função de envio */}
+    <InputWithLabel
+      id="search"
+      value={searchTerm}
+      isFocused
+      onInputChange={onSearchInput}
+    >
+      <strong>Search:</strong>
+    </InputWithLabel>
+    <button type="submit" disabled={!searchTerm}>
+      {" "}
+      {/* Botão com tipo "submit" */}
+      Submit
+    </button>
+  </form>
+);
+
+const InputWithLabel = ({
+  id,
+  value,
+  type = "text",
+  onInputChange,
+  isFocused,
+  children,
+}) => {
+  const inputRef = React.useRef();
+
+  React.useEffect(() => {
+    if (isFocused && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isFocused]);
+
+  return (
+    <>
+      <label htmlFor={id}>{children}</label>
+      &nbsp;
+      <input
+        ref={inputRef}
+        id={id}
+        type={type}
+        value={value}
+        onChange={onInputChange}
+      />
+    </>
+  );
+};
+
+const List = ({ list, onRemoveItem }) => (
+  <ul>
+    {list.map((item) => (
+      <Item key={item.objectID} item={item} onRemoveItem={onRemoveItem} />
+    ))}
+  </ul>
+);
+
+const Item = ({ item, onRemoveItem }) => (
+  <li>
+    <span>
+      <a href={item.url}>{item.title}</a>
+    </span>
+    <span>{item.author}</span>
+    <span>{item.num_comments}</span>
+    <span>{item.points}</span>
+    <span>
+      <button type="button" onClick={() => onRemoveItem(item)}>
+        Dismiss
+      </button>
+    </span>
+  </li>
+);
+
+export default App;
