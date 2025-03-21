@@ -50,19 +50,19 @@ const API_ENDPOINT = "https://hn.algolia.com/api/v1/search?query=";
 const App = () => {
   const [searchTerm, setSearchTerm] = useStorageState("search", "React");
 
+  // A: Novo estado `url` foi adicionado para controlar a URL da API.
+  const [url, setUrl] = React.useState(`${API_ENDPOINT}${searchTerm}`);
+
   const [stories, dispatchStories] = React.useReducer(storiesReducer, {
     data: [],
     isLoading: false,
     isError: false,
   });
 
-  // A: Extraímos a lógica de busca de dados para uma função separada usando useCallback.
   const handleFetchStories = React.useCallback(() => {
-    if (!searchTerm) return;
-
     dispatchStories({ type: "STORIES_FETCH_INIT" });
 
-    fetch(`${API_ENDPOINT}${searchTerm}`)
+    fetch(url) // B: Agora usa o estado `url` em vez de construir a URL dinamicamente.
       .then((response) => response.json())
       .then((result) => {
         dispatchStories({
@@ -71,12 +71,11 @@ const App = () => {
         });
       })
       .catch(() => dispatchStories({ type: "STORIES_FETCH_FAILURE" }));
-  }, [searchTerm]); // B: O array de dependências garante que a função seja recriada apenas quando searchTerm muda.
+  }, [url]); // C: Dependência agora é `url`, não mais `searchTerm`.
 
-  // C: O useEffect agora chama a função memorizada handleFetchStories.
   React.useEffect(() => {
     handleFetchStories();
-  }, [handleFetchStories]); // D: handleFetchStories é adicionado como dependência para garantir que o efeito execute quando a função muda.
+  }, [handleFetchStories]);
 
   const handleRemoveStory = (item) => {
     dispatchStories({
@@ -85,8 +84,13 @@ const App = () => {
     });
   };
 
-  const handleSearch = (event) => {
+  const handleSearchInput = (event) => {
     setSearchTerm(event.target.value);
+  };
+
+  // D: Nova função para atualizar a URL quando o usuário submete a pesquisa.
+  const handleSearchSubmit = () => {
+    setUrl(`${API_ENDPOINT}${searchTerm}`);
   };
 
   return (
@@ -97,10 +101,19 @@ const App = () => {
         id="search"
         value={searchTerm}
         isFocused
-        onInputChange={handleSearch}
+        onInputChange={handleSearchInput} // E: Atualiza `searchTerm` ao digitar.
       >
         <strong>Search:</strong>
       </InputWithLabel>
+
+      {/* F: Botão "Submit" foi adicionado para confirmar a pesquisa. */}
+      <button
+        type="button"
+        disabled={!searchTerm} // G: Desabilita o botão se `searchTerm` estiver vazio.
+        onClick={handleSearchSubmit} // H: Atualiza a URL e dispara a busca.
+      >
+        Submit
+      </button>
 
       <hr />
 
